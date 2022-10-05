@@ -1,4 +1,4 @@
-./*.mol
-./*.png
-./*.cdx
-./.idea/*
+*.mol
+*.png
+*.cdx
+.idea/*
