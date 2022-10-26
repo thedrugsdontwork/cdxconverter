@@ -86,50 +86,50 @@ def convertJson2Mol(data:dict,sanitize=False,removeHs=False):
                                 # mols.append(dynamic_cast<RWMol *>(fused.release()));
                             # else :
                                 # mols.append(rmol)
-                            mols.append(rmol)
-                            res = mols[-1]
-                            conf =Conformer(res.GetNumAtoms())
-                            conf.Set3D(False)
-                            hasConf = False
-                            for atm in res.GetAtoms():
-                                if atm.HasProp("CDX_ATOM_POS"):
-                                    hasConf = True
-                                    coord =json.loads(atm.GetProp("CDX_ATOM_POS"))
-                                    p=Point3D()
-                                    if(len(coord) == 2):
-                                        p.x = coord['x']
-                                        p.y = coord['y']
-                                        p.z = 0.0
-                                    # LOG.debug(f"Set position {atm.GetIdx()} {coord}")
-                                    conf.SetAtomPosition(atm.GetIdx(), p)
-                                    atm.ClearProp("CDX_ATOM_POS")
-                            if (hasConf) :
-                                confidx = res.AddConformer(conf)
-                                # rdmolops.AssignChiralTypesFromBondDirs(res,res.GetConformer(confidx))
-                                # rdmolops.DetectAtomStereoChemistry(res, res.GetConformer(confidx));
-                            # func arg
-                            if (sanitize):
-                                try :
-                                    if (removeHs) :
-                                        rdmolops.RemoveHs(res,False,False)
-                                    else:
-                                        rdmolops.SanitizeMol(res)
-                                except Exception as e :
-                                    LOG.error(f"CDXMLParser: failed sanitizing skipping fragment {frag_id} ")
-                                    mols.pop(-1)
-                                    continue
+                        mols.append(rmol)
+                        res = mols[-1]
+                        conf =Conformer(res.GetNumAtoms())
+                        conf.Set3D(False)
+                        hasConf = False
+                        for atm in res.GetAtoms():
+                            if atm.HasProp("CDX_ATOM_POS"):
+                                hasConf = True
+                                coord =json.loads(atm.GetProp("CDX_ATOM_POS"))
+                                p=Point3D()
+                                if(len(coord) == 2):
+                                    p.x = coord['x']
+                                    p.y = coord['y']
+                                    p.z = 0.0
+                                # LOG.debug(f"Set position {atm.GetIdx()} {coord}")
+                                conf.SetAtomPosition(atm.GetIdx(), p)
+                                atm.ClearProp("CDX_ATOM_POS")
+                        if (hasConf) :
+                            confidx = res.AddConformer(conf)
+                            # rdmolops.AssignChiralTypesFromBondDirs(res,res.GetConformer(confidx))
+                            # rdmolops.DetectAtomStereoChemistry(res, res.GetConformer(confidx));
+                        # func arg
+                        if (sanitize):
+                            try :
+                                if (removeHs) :
+                                    rdmolops.RemoveHs(res,False,False)
+                                else:
+                                    rdmolops.SanitizeMol(res)
+                            except Exception as e :
+                                LOG.error(f"CDXMLParser: failed sanitizing skipping fragment {frag_id} ")
+                                mols.pop(-1)
+                                continue
 
-                                # // now that atom stereochem has been perceived, the wedging
-                                # // information is no longer needed, so we clear
-                                # // single bond dir flags:
+                            # // now that atom stereochem has been perceived, the wedging
+                            # // information is no longer needed, so we clear
+                            # // single bond dir flags:
 
-                                # ClearSingleBondDirFlags(*res)
-                                rdmolops.DetectBondStereochemistry(res)
-                                rdmolops.AssignStereochemistry(res, True, True, True)
-                            else :
-                                # ClearSingleBondDirFlags(*res)
-                                rdmolops.DetectBondStereochemistry(res)
-                    
+                            # ClearSingleBondDirFlags(*res)
+                            rdmolops.DetectBondStereochemistry(res)
+                            rdmolops.AssignStereochemistry(res, True, True, True)
+                        else :
+                            # ClearSingleBondDirFlags(*res)
+                            rdmolops.DetectBondStereochemistry(res)
+                
     return mols
                     
                     
@@ -219,7 +219,7 @@ def parse_fragment(mol,frag, ids, missing_frag_id,external_attachment=-1):
             elif attr=="Atom_ElementList":
                 elementlist = node[attr]
             elif attr== "2DPosition":
-              atom_coords =node[attr]
+                atom_coords =node[attr]
             elif attr == "Atom_EnhancedStereoGroupNum":
                 #uint16
                 sgroup = node[attr]
@@ -250,7 +250,7 @@ def parse_fragment(mol,frag, ids, missing_frag_id,external_attachment=-1):
         updateLabels = True
         takeOwnership = True
         idx = mol.AddAtom(atom)#, updateLabels, takeOwnership)
-
+        
         #关于query的设置暂时先搁置
         # if len(query_label)>0:
         #     if (query_label[0] == 'R'):
@@ -363,7 +363,6 @@ def parse_fragment(mol,frag, ids, missing_frag_id,external_attachment=-1):
                 # bnd.SetBondDir(BondDir.BEGINWEDGE)
                 bnd.SetBondDir(BondDir.BEGINDASH)
 
-
     #忽略这里先
     # if len(sgroups)>0:
     #     # std::vector<StereoGroup> stereo_groups;
@@ -372,7 +371,6 @@ def parse_fragment(mol,frag, ids, missing_frag_id,external_attachment=-1):
     #         stereo_groups.append(StereoGroup(sgroup.second.grouptype, sgroup.second.atoms))
     #     mol.SetStereoGroups(stereo_groups)
     
-
     return not skip_fragment
             
           

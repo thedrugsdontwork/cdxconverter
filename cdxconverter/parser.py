@@ -200,13 +200,13 @@ def match_header(buffer):
 
 def parse_color_table(byte_arr):
     # http://www.cambridgesoft.com/services/documentation/sdk/chemdraw/cdx/properties/ColorTable.htm
-    length=QUADCONST(*byte_arr[:2],0,0)
+    length=UINT16(QUADCONST(*byte_arr[:2],0,0))
     tmp_arr=byte_arr[2:]
     res=[]
     for i in range(length):
-        r=QUADCONST(*tmp_arr[:2],0,0)//256
-        g=QUADCONST(*tmp_arr[2:4],0,0)//256
-        b=QUADCONST(*tmp_arr[4:6],0,0)//256
+        r=INT16(QUADCONST(*tmp_arr[:2],0,0))//256
+        g=INT16(QUADCONST(*tmp_arr[2:4],0,0))//256
+        b=INT16(QUADCONST(*tmp_arr[4:6],0,0))//256
         tmp_arr=tmp_arr[6:]
         res.append(dict(r=r,g=g,b=b))
     return res
