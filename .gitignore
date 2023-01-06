@@ -1,5 +1,7 @@
-./*.mol
+*.mol
 *.png
-./*.cdx
+*.cdx
 .idea
 *.smiles
+test/*.mol
+test/*.png

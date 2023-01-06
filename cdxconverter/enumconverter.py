@@ -25,10 +25,12 @@ kCDXLengthOver				=0xFFFF
 # set default little ending store
 
 QUADCONST =lambda a, b, c, d: \
-	 (( ((d) & 0xff) << 24)	\
-	| ( ((c) & 0xff) << 16)	\
-	| ( ((b) & 0xff) << 8)	\
-	| ( ((a) & 0xff)))
+			(
+				( ((d) & 0xff) << 24)	\
+			  | ( ((c) & 0xff) << 16)	\
+			  | ( ((b) & 0xff) << 8)	\
+			  | ( ((a) & 0xff))
+			)
 
 # typedef UINT16 CDXTag;
 # typedef INT32  CDXObjectID; // signed for now, due to mac compiler bug?

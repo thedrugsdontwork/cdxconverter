@@ -5,16 +5,16 @@ import struct
 class byteOverFlow(Exception):...
 
 def UNSIGNED(func):
-    bit=func()
+    bit = func()
     def wapper(val):
         return val&((1<<bit)-1)
     return wapper
 
 def SIGNED(func):
-    bit=func()
-    flag=(1<<bit)-1
-    tag=1<<(bit-1)
-    effect=flag^tag
+    bit     = func()
+    flag    = (1<<bit)-1
+    tag     = 1<<(bit-1)
+    effect  = flag^tag
     def wapper(val):
         tmp = val & flag
         if tmp == tag:
@@ -52,52 +52,9 @@ def INT32():
 def UINT32():
     return 32
 
-# def INT8(val):
-#     tmp=val&0xff
-#     if tmp==0x80:
-#         raise byteOverFlow(f"INT8 overflow {val}->fmt:{tmp}")
-#     if tmp&0x80>0:
-#         #<0
-#         tmp=tmp&0x7f
-#         tmp=(tmp-1)^0x7f
-#         return -1*tmp
-#     else:
-#         return tmp
-#
-# def UINT8(val):
-#     return val&0xff
-#
-# def INT16(val):
-#     tmp=val&0xff_ff
-#     if tmp==0x80_00:
-#         raise byteOverFlow(f"INT16 overflow {val}->fmt:{tmp}")
-#     if tmp&0x80_00:
-#         tmp=tmp&0x7f_ff
-#         tmp = (tmp - 1) ^ 0x7f_ff
-#         return -1*tmp
-#     else:
-#         return tmp
-#
-# def UINT16(val):
-#     return val&0xff_ff
-#
-# def INT32(val):
-#     tmp=val&0xff_ff_ff_ff
-#     if tmp==0x80_00_00_00:
-#         raise byteOverFlow(f"INT16 overflow {val}->fmt:{tmp}")
-#     if tmp&0x80_00_00_00>0:
-#         tmp = tmp & 0x7f_ff_ff_ff
-#         tmp = (tmp - 1) ^ 0x7f_ff_ff_ff
-#         return -1 * tmp
-#     else:
-#         return tmp
-#
-# def UINT32(val):
-#     return val&0xff_ff_ff_ff
-
 def FLOAT64(val):
-    tmp=val&0xffff_ffff_ffff_ffff
-    tmp=struct.unpack(
+    tmp = val&0xffff_ffff_ffff_ffff
+    tmp = struct.unpack(
         'd',
         tmp.to_bytes(8,'little')
     )[0]

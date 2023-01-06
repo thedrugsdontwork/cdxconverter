@@ -1,6 +1,8 @@
 import sys
 import json
+# from rdkit import Chem
 from rdkit.Geometry import Point3D,Point2D
+# from rdkit.Chem import AllChem
 from .parser  import cdx_reader
 import traceback
 from rdkit.Chem.rdchem import RWMol,BondDir,BondStereo,BondType,Conformer,StereoGroupType,Atom, Bond, Mol
@@ -18,40 +20,40 @@ LOG.setLevel(
     logging.DEBUG
 )
 BOND_TYPE={
-    1: BondType.SINGLE ,
-    2: BondType.DOUBLE ,
-    4:BondType.TRIPLE,
-    8:BondType.QUADRUPLE,
-    0x80:BondType.AROMATIC
+    1   : BondType.SINGLE,
+    2   : BondType.DOUBLE,
+    4   : BondType.TRIPLE,
+    8   : BondType.QUADRUPLE,
+    0x80: BondType.AROMATIC
 }
 
 STEREO_TYPE={
-    0:	'Unspecified',
-    1:	'None'	,
-    2:	'Absolute'	,
-    3:	'Or',#	Or (requires kCDXProp_Atom_EnhancedStereoGroupNum)
-    4:	'And'#	And
+    0   : 'Unspecified',
+    1   : 'None'	,
+    2   : 'Absolute'	,
+    3   : 'Or',#	Or (requires kCDXProp_Atom_EnhancedStereoGroupNum)
+    4   : 'And'#	And
 }
 NODE_TYPE={
-    0:'Unspecified',
-	1:'Element',
-	2:'ElementList',
-	3:'ElementListNickname',
-	4:'Nickname',
-    5:'Fragment',
-    6:'Formula',
-	7:'GenericNickname',
-	8:'AnonymousAlternativeGroup',
-	9:'NamedAlternativeGroup',
-	10:'MultiAttachment',
-    11:'VariableAttachment',
-	12:'ExternalConnectionPoint',
-    13:'LinkNode'
+    0   : 'Unspecified',
+	1   : 'Element',
+	2   : 'ElementList',
+	3   : 'ElementListNickname',
+	4   : 'Nickname',
+    5   : 'Fragment',
+    6   : 'Formula',
+	7   : 'GenericNickname',
+	8   : 'AnonymousAlternativeGroup',
+	9   : 'NamedAlternativeGroup',
+	10  : 'MultiAttachment',
+    11  : 'VariableAttachment',
+	12  : 'ExternalConnectionPoint',
+    13  : 'LinkNode'
 }
 def convertJson2Mol(data:dict,sanitize=False,removeHs=False):
-    ids=dict()
-    mols=[]
-    fragment_lookup=dict()
+    ids             = dict()
+    mols            = list()
+    fragment_lookup = dict()
     missing_frag_id = -1
     for key in data:
         #top_level prop
@@ -63,8 +65,9 @@ def convertJson2Mol(data:dict,sanitize=False,removeHs=False):
                 for p_key in item:
                     if p_key == "Fragment":
                         LOG.info("Start parse fragment")
-                        rmol=RWMol()
+                        
                         for frag in item[p_key]:
+                            rmol = RWMol()
                             if not parse_fragment(rmol, frag, ids, missing_frag_id):
                                 continue
                             frag_id = rmol.GetIntProp("CDX_FRAG_ID")
@@ -86,49 +89,50 @@ def convertJson2Mol(data:dict,sanitize=False,removeHs=False):
                                 # mols.append(dynamic_cast<RWMol *>(fused.release()));
                             # else :
                                 # mols.append(rmol)
-                        mols.append(rmol)
-                        res = mols[-1]
-                        conf =Conformer(res.GetNumAtoms())
-                        conf.Set3D(False)
-                        hasConf = False
-                        for atm in res.GetAtoms():
-                            if atm.HasProp("CDX_ATOM_POS"):
-                                hasConf = True
-                                coord =json.loads(atm.GetProp("CDX_ATOM_POS"))
-                                p=Point3D()
-                                if(len(coord) == 2):
-                                    p.x = coord['x']
-                                    p.y = coord['y']
-                                    p.z = 0.0
-                                # LOG.debug(f"Set position {atm.GetIdx()} {coord}")
-                                conf.SetAtomPosition(atm.GetIdx(), p)
-                                atm.ClearProp("CDX_ATOM_POS")
-                        if (hasConf) :
-                            confidx = res.AddConformer(conf)
-                            # rdmolops.AssignChiralTypesFromBondDirs(res,res.GetConformer(confidx))
-                            # rdmolops.DetectAtomStereoChemistry(res, res.GetConformer(confidx));
-                        # func arg
-                        if (sanitize):
-                            try :
-                                if (removeHs) :
-                                    rdmolops.RemoveHs(res,False,False)
-                                else:
-                                    rdmolops.SanitizeMol(res)
-                            except Exception as e :
-                                LOG.error(f"CDXMLParser: failed sanitizing skipping fragment {frag_id} ")
-                                mols.pop(-1)
-                                continue
+                            mols.append(rmol)
+                            res     = mols[-1]
+                            conf    = Conformer(res.GetNumAtoms())
+                            conf.Set3D(False)
+                            hasConf = False
+                            for atm in res.GetAtoms():
+                                if atm.HasProp("CDX_ATOM_POS"):
+                                    hasConf = True
+                                    coord   = json.loads(atm.GetProp("CDX_ATOM_POS"))
+                                    p       = Point3D()
+                                    if(len(coord) == 2):
+                                        p.x = coord['x']
+                                        p.y = coord['y']
+                                        p.z = coord.get('z',0.0)
+                                    # LOG.debug(f"Set position {atm.GetIdx()} {coord}")
+                                    conf.SetAtomPosition(atm.GetIdx(), p)
+                                    atm.ClearProp("CDX_ATOM_POS")
+                            if (hasConf) :
+                                confidx = res.AddConformer(conf)
+                                # rdmolops.AssignChiralTypesFromBondDirs(res,res.GetConformer(confidx))
+                                # rdmolops.DetectAtomStereoChemistry(res, res.GetConformer(confidx));
+                            # func arg
+                            if (sanitize):
+                                try :
+                                    if (removeHs) :
+                                        rdmolops.RemoveHs(res,False,False)
+                                    else:
+                                        rdmolops.SanitizeMol(res)
+                                except Exception as e :
+                                    LOG.error(f"CDXMLParser: failed sanitizing skipping fragment {frag_id} ")
+                                    mols.pop(-1)
+                                    continue
 
-                            # // now that atom stereochem has been perceived, the wedging
-                            # // information is no longer needed, so we clear
-                            # // single bond dir flags:
+                                # // now that atom stereochem has been perceived, the wedging
+                                # // information is no longer needed, so we clear
+                                # // single bond dir flags:
 
-                            # ClearSingleBondDirFlags(*res)
-                            rdmolops.DetectBondStereochemistry(res)
-                            rdmolops.AssignStereochemistry(res, True, True, True)
-                        else :
-                            # ClearSingleBondDirFlags(*res)
-                            rdmolops.DetectBondStereochemistry(res)
+                                # ClearSingleBondDirFlags(*res)
+                                rdmolops.DetectBondStereochemistry(res)
+                                rdmolops.AssignStereochemistry(res, True, True, True)
+                            else :
+                                # ClearSingleBondDirFlags(*res)
+                                rdmolops.DetectBondStereochemistry(res)
+                            
                 
     return mols
                     
@@ -138,34 +142,34 @@ def convertJson2Mol(data:dict,sanitize=False,removeHs=False):
 
 def parse_fragment(mol,frag, ids, missing_frag_id,external_attachment=-1):
     # default -1 unknown
-    frag_id=frag.get("id",-1)
+    frag_id = frag.get("id",-1)
     if frag_id==-1:
         LOG.warning("Invalid or missing fragment id from CDXML fragment, assigning new one...")
         frag_id = missing_frag_id
-        missing_frag_id-=1
+        missing_frag_id -= 1
     mol.SetIntProp("CDX_FRAG_ID", frag_id)
-    atom_id=-1
+    atom_id = -1
     # std::vector<BondInfo> bonds;
     # std::map<int, StereoGroupInfo> sgroups;
-    sgroups=dict()
-    bonds=[]
-    skip_fragment =False
+    sgroups         =dict()
+    bonds           =[]
+    skip_fragment   =False
     for node in frag.get("Node",[]):
-        elemno = 6         # default to carbon
-        num_hydrogens = 0
-        charge = 0
-        atommap = 0
-        mergeparent = -1
-        rgroup_num = -1
-        isotope = 0
-        sgroup = -1
-        explicitHs = False
-        grouptype = StereoGroupType.STEREO_ABSOLUTE
-        query_label=""
-        bond_ordering=[]
-        elementlist=[]
-        atom_coords=[]
-        nodetype = ""
+        elemno          = 6         # default to carbon
+        num_hydrogens   = 0
+        charge          = 0
+        atommap         = 0
+        mergeparent     = -1
+        rgroup_num      = -1
+        isotope         = 0
+        sgroup          = -1
+        explicitHs      = False
+        grouptype       = StereoGroupType.STEREO_ABSOLUTE
+        query_label     = ""
+        bond_ordering   = []
+        elementlist     = []
+        atom_coords     = []
+        nodetype        = ""
         for attr in node:
             #get attr
             if attr == "id" :
@@ -186,7 +190,7 @@ def parse_fragment(mol,frag, ids, missing_frag_id,external_attachment=-1):
                 #Atom Charge number
 
                 charge = node[attr]
-                LOG.info(f"get charge {charge}")
+                LOG.debug(f"get charge {charge}")
             elif attr== "Atom_Isotope":
                 #if not contained The atom is assumed to be of natural abundance
               isotope = node[attr]
@@ -195,7 +199,7 @@ def parse_fragment(mol,frag, ids, missing_frag_id,external_attachment=-1):
                 #if not contain default atom
                 nodetype = NODE_TYPE.get(node[attr],'Unspecified')
                 if (nodetype == "Nickname" or nodetype == "Fragment"):     
-                    elemno = 0
+                    elemno  = 0
                     atommap = atom_id
                 elif (nodetype == "ExternalConnectionPoint"):
                     if (external_attachment <= 0):
@@ -203,23 +207,26 @@ def parse_fragment(mol,frag, ids, missing_frag_id,external_attachment=-1):
                         skip_fragment = True
                         break
                     
-                    elemno = 0
+                    elemno  = 0
                     atommap = external_attachment
                     mergeparent = external_attachment
                 elif (nodetype == "GenericNickname"):
                     # http://www.cambridgesoft.com/services/documentation/sdk/chemdraw/cdx/properties/Node_Type.htm
-                    LOG.warnning("Some produce is ignore.......")
+                    LOG.warning("Some produce is ignore.......")
                     elemno = 0
                     ##pass this produce is not correct
                 elif nodetype == "ElementList":
-                    query_label ="ElementList"
+                    query_label = "ElementList"
                 elif nodetype=="Unspecified":
                     elemno = 0
                 # LOG.debug(f"Now Atom is {elemno},{nodetype},{node[attr]}")
             elif attr=="Atom_ElementList":
                 elementlist = node[attr]
             elif attr== "2DPosition":
-                atom_coords =node[attr]
+                atom_coords = node[attr]
+            # elif attr== "3DPosition":
+            # # 暂不知晓rdkit对3d分子如何处理，这里暂不做处理，只使用2d坐标
+            #     atom_coords = node[attr]
             elif attr == "Atom_EnhancedStereoGroupNum":
                 #uint16
                 sgroup = node[attr]
@@ -233,9 +240,9 @@ def parse_fragment(mol,frag, ids, missing_frag_id,external_attachment=-1):
                 elif (stereo_type == "Absolute"):
                     grouptype = StereoGroupType.STEREO_ABSOLUTE
                 else:
-                    LOG.warnning(f"Unhandled enhanced stereo type {stereo_type} ignoring")
+                    LOG.warning(f"Unhandled enhanced stereo type {stereo_type} ignoring")
         # CHECK_INVARIANT(atom_id != -1, "Uninitialized atom id in cdxml.")
-        atom=Atom(elemno)
+        atom = Atom(elemno)
         atom.SetFormalCharge(charge)
         atom.SetNumExplicitHs(num_hydrogens)
         atom.SetNoImplicit(explicitHs)
@@ -247,9 +254,9 @@ def parse_fragment(mol,frag, ids, missing_frag_id,external_attachment=-1):
             atom.SetIntProp("MergeParent", mergeparent)
         atom.SetProp("CDX_ATOM_POS", json.dumps(atom_coords))#position
         atom.SetUnsignedProp("CDX_ATOM_ID", atom_id)
-        updateLabels = True
-        takeOwnership = True
-        idx = mol.AddAtom(atom)#, updateLabels, takeOwnership)
+        updateLabels    = True
+        takeOwnership   = True
+        idx             = mol.AddAtom(atom)#, updateLabels, takeOwnership)
         
         #关于query的设置暂时先搁置
         # if len(query_label)>0:
@@ -261,7 +268,7 @@ def parse_fragment(mol,frag, ids, missing_frag_id,external_attachment=-1):
         #         atom = addquery(makeQAtomQuery(), query_label, mol, idx);
         #     elif (query_label == "ElementList"):
         #         if len(elementlistz)==0:
-        #             LOG.warnning("ElementList is empty, ignoring...")
+        #             LOG.warning("ElementList is empty, ignoring...")
         #         else:
         #             q = new ATOM_OR_QUERY;
         #                 q.SetDescription("AtomOr");
@@ -277,7 +284,7 @@ def parse_fragment(mol,frag, ids, missing_frag_id,external_attachment=-1):
         if sgroup != -1 :
             stereo = sgroups[sgroup]
             if (stereo.sgroup != -1 and stereo.grouptype != grouptype) :
-                LOG.warnning("StereoGroup has conflicting stereo group types, ignoring")
+                LOG.warning("StereoGroup has conflicting stereo group types, ignoring")
                 stereo.conflictingSgroupTypes = True
             stereo.grouptype = grouptype
             stereo.atoms.append(atom)
@@ -298,26 +305,26 @@ def parse_fragment(mol,frag, ids, missing_frag_id,external_attachment=-1):
                     mol.setProp("CDX_FRAG_ID", frag_id)
         
     for bond in frag.get("Bond",[]):
-        bond_id = -1
-        start_atom = -1
-        end_atom = -1
-        order = BondType.SINGLE
-        display="Solid"
+        bond_id     = -1
+        start_atom  = -1
+        end_atom    = -1
+        order       = BondType.SINGLE
+        display     = "Solid"
         for attr in bond:
             try :
                 if attr == "id":
-                    bond_id = bond[attr]
+                    bond_id     = bond[attr]
                 elif attr == "Bond_Begin": 
-                    start_atom = bond[attr]
+                    start_atom  = bond[attr]
                 elif (attr == "Bond_End"):
-                    end_atom = bond[attr]
+                    end_atom    = bond[attr]
                 elif (attr == "Bond_Order"):
-                    bond_order=bond[attr]
+                    bond_order  = bond[attr]
 
                     order=BOND_TYPE.get(bond_order,None)
                     if order ==None:
-                        LOG.warnning("Unhandled bond order set default single")
-                        order=BOND_TYPE.get(1)
+                        LOG.warning("Unhandled bond order set default single")
+                        order   = BOND_TYPE.get(1)
                 elif (attr =="Bond_Display"):
                     #// gets wedge/hash stuff and probably more
                     display = BOND_DISPLAY.get(bond[attr],'Solid')
@@ -333,11 +340,11 @@ def parse_fragment(mol,frag, ids, missing_frag_id,external_attachment=-1):
     if (not skip_fragment) :
         for bond in bonds:
             # unsigned int bond_idx;
-            bond_id=bond[0]
-            bond_end=bond[2]
-            bond_begin=bond[1]
-            bond_type=bond[3]
-            bond_display=bond[4]
+            bond_id     = bond[0]
+            bond_end    = bond[2]
+            bond_begin  = bond[1]
+            bond_type   = bond[3]
+            bond_display= bond[4]
             if (bond_display == "WedgeEnd" or bond_display == "WedgedHashEnd") :
                 # // here The "END" of the bond is really our Beginning.
                 # // swap atom direction
