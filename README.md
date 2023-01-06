@@ -16,4 +16,7 @@
 - Clone project and refer to  [example](./test/test.py)
 
 
+## BugFix
+- 1.0.0 Fix the bug that only one molecule can be parsed for multiple molecules in the cdx file.
+
 
